@@ -4,6 +4,7 @@ import com.sun.org.apache.xerces.internal.xs.StringList;
 import data.FileOperation;
 import data.Post;
 
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -18,7 +19,7 @@ public class process {
 读取原始数据checkinWithTimestamp.txt 格式"userid+\t+poiid+\t+poicategory+time"
 并以<user,time,category,time>存储，time转换为unix时间戳
 */
-public static void timestampTrans(String filename) {
+    public static void timestampTrans(String filename) {
     String readname = filename+"/checkinWithTimestamp.txt";
     String writename = filename+ "/checkinWithUnixTime.txt";
 //    List<Post> dataPosts = new ArrayList<>();
@@ -61,17 +62,50 @@ public static void timestampTrans(String filename) {
         return date;
     }
 
-    /*
-读取原始数据checkinWithTimestamp.txt 格式"userid+\t+poiid+\t+poicategory+time"
-*/
-    public static void writeFile (List<Post> dataPosts ) {
+    /**
+     * 将文件mapping编号，并分为训练集和测试集
+     *随机
+     * TODO
+     * 按照每个用户的最后几个切分？
+     */
+    public static void DivideData(String filepath){
+        String filename = "DianpingCheckinfalse2525.txt";
+        String readpath = filepath+filename;
+
+        FileInputStream file;
+        BufferedReader bufferedReader;
+        StringBuilder trainStr = new StringBuilder();
+        StringBuilder testStr = new StringBuilder();
+        String read;
+        int trainnum=0;
+        int testnum=0;
+        try {
+            file = new FileInputStream(readpath);
+            bufferedReader = new BufferedReader(new InputStreamReader(file, "UTF-8"));
+            while ((read = bufferedReader.readLine()) != null) {
+                if(Math.random()<0.8){
+
+                }
+                else {
+
+                }
+
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
     }
 
-    public static void main(String args[]){
-        timestampTrans("./rawdata");
 
+    public static void main(String args[]){
+//        timestampTrans("./rawdata");
+            DivideData("./rawdata/");
 //        String date = Date2TimeStamp("15-09-24" , "yy-MM-dd");// HH:mm:ss
 //        String date =TimeStamp2Date( "1288291694000","yy-MM-dd");
 //        System.out.print(date);
