@@ -5,6 +5,7 @@ import com.google.common.collect.Table;
 import data.DenseMatrix;
 import data.Post;
 import intf.TagMFRecommender;
+import org.apache.commons.logging.LogFactory;
 import util.Lists;
 import util.Randoms;
 
@@ -19,6 +20,9 @@ public class PITF extends TagMFRecommender {
     protected int numSample;
     protected Table<Integer, Integer, Set<Integer>> trainTagSet;
     protected Map<Integer, Set<Integer>> userTagSet, itemTagSet;
+
+    private static org.apache.commons.logging.Log allLog = LogFactory.getLog("alllog");
+
 
     public PITF(List<Post> trainPostsParam, List<Post> testPostsParam, int dimParam, double initStdevParam, int iterParam,
                 double learnRateParam, double regUParam, double regIParam, double regTParam,
@@ -57,9 +61,13 @@ public class PITF extends TagMFRecommender {
     public void buildModel() throws Exception {
         long num_draws_per_iter = this.numRates * this.numSample;
         double averageTraintime = 0.0;
+        double loss = 0.0d;
+        double last_loss = 0.0d;
         for (int iter_index = 0; iter_index < this.iter; iter_index++) {
+            allLog.info("iter " + iter_index +  " " + new Date());
             System.out.printf("%-15s\t", "Iter:" + iter_index);
             System.out.println(new Date());
+            loss = 0.0d;
             this.trainStartTime = System.currentTimeMillis();
             for (int sample = 0; sample < num_draws_per_iter; sample++) {
                 int post_index = Randoms.uniform(this.numRates);
@@ -72,6 +80,7 @@ public class PITF extends TagMFRecommender {
 
                 double x_uint = this.predict(user, item, neg_tag);
                 double normalizer = loss(x_uit - x_uint);
+                loss += Math.log(sigmoid(x_uit - x_uint));
 
                 for (int k = 0; k < this.dim; k++) {
                     double u_k = this.userVectors.get(user, k);
@@ -81,6 +90,13 @@ public class PITF extends TagMFRecommender {
                     double t_n_u_f = this.tagUserVectors.get(neg_tag, k);
                     double t_n_i_f = this.tagItemVectors.get(neg_tag, k);
 
+                    loss -= regU * Math.pow(u_k, 2);
+                    loss -= regI * Math.pow(i_k, 2);
+                    loss -= regT * Math.pow(t_p_u_f, 2);
+                    loss -= regT * Math.pow(t_p_i_f, 2);
+                    loss -= regT * Math.pow(t_n_u_f, 2);
+                    loss -= regT * Math.pow(t_n_i_f, 2);
+
                     this.userVectors.set(user, k, u_k + this.learnRate * (normalizer * (t_p_u_f - t_n_u_f) - this.regU * u_k));
                     this.itemVectors.set(item, k, i_k + this.learnRate * (normalizer * (t_p_i_f - t_n_i_f) - this.regI * i_k));
                     this.tagUserVectors.set(tag, k, t_p_u_f + this.learnRate * (normalizer * u_k - this.regT * t_p_u_f));
@@ -89,11 +105,21 @@ public class PITF extends TagMFRecommender {
                     this.tagItemVectors.set(neg_tag, k, t_n_i_f + this.learnRate * (normalizer * (-i_k) - this.regT * t_n_i_f));
                 }
             }
+
             this.trainEndTime = System.currentTimeMillis();
-            evaluate();
+            allLog.info("loss " + loss + " delta_loss " + (loss - last_loss));
+            last_loss = loss;
+            /**
+             * 隔几轮输出一次
+             */
+            if(iter_index % 5== 0||iter_index==(this.iter-1)) {
+                evaluate();
+            }
+
             averageTraintime += (trainEndTime - trainStartTime) * 1.0 / 1000;
         }
         System.out.println("averageTime " + averageTraintime/this.iter);
+
     }
 
     protected int drawSample(int user, int item) {
@@ -109,6 +135,9 @@ public class PITF extends TagMFRecommender {
     protected static double loss(double x) {
         double expX = Math.exp(-x);
         return expX / (1 + expX);
+    }
+    protected static double sigmoid(double x) {
+        return 1 / (1 + Math.exp(-x));
     }
 
     @Override
