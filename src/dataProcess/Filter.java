@@ -8,7 +8,7 @@ import java.util.*;
  * 处理后的数据是user,restaurant,category,time，每一条表示用户，餐厅，种类，签到时间
  *
  */
-public class Filter {
+public class  Filter {
     /**
      * shopInfo.json中的统计信息
      */
