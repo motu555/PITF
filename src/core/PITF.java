@@ -20,6 +20,7 @@ public class PITF extends TagMFRecommender {
     protected int numSample;
     protected Table<Integer, Integer, Set<Integer>> trainTagSet;
     protected Map<Integer, Set<Integer>> userTagSet, itemTagSet;
+    double averageTrainTime = 0.0;
 
     private static org.apache.commons.logging.Log allLog = LogFactory.getLog("alllog");
 
@@ -60,7 +61,7 @@ public class PITF extends TagMFRecommender {
     @Override
     public void buildModel() throws Exception {
         long num_draws_per_iter = this.numRates * this.numSample;
-        double averageTraintime = 0.0;
+//        double averageTraintime = 0.0;
         double loss = 0.0d;
         double last_loss = 0.0d;
         for (int iter_index = 0; iter_index < this.iter; iter_index++) {
@@ -113,13 +114,16 @@ public class PITF extends TagMFRecommender {
              * 隔几轮输出一次
              */
             if(iter_index % 5== 0||iter_index==(this.iter-1)) {
-                evaluate();
+                measureList = evaluate();
             }
 
-            averageTraintime += (trainEndTime - trainStartTime) * 1.0 / 1000;
+            averageTrainTime += (trainEndTime - trainStartTime) * 1.0 / 1000;
         }
-        System.out.println("averageTime " + averageTraintime/this.iter);
+        System.out.println("averageTime " + averageTrainTime/this.iter);
 
+    }
+    public double getAverageTrainTime() {
+        return averageTrainTime;
     }
 
     protected int drawSample(int user, int item) {
