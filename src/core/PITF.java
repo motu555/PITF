@@ -113,7 +113,7 @@ public class PITF extends TagMFRecommender {
             /**
              * 隔几轮输出一次
              */
-            if(iter_index % 5== 0||iter_index==(this.iter-1)) {
+            if(iter_index % 10== 0||iter_index==(this.iter-1)) {
                 measureList = evaluate();
             }
 

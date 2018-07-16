@@ -14,7 +14,8 @@ import java.util.List;
 public class PIFTUTP {
     public static void main(String[] args) throws IOException {
 //        String dataName = "lastFM";
-        String dataName = "DianpingCheckinfalse2525";
+//        String dataName = "DianpingCheckinfalse2525_cate";
+        String dataName ="DianpingCheckintrue0.3_false1510_cate";//字段顺序正确
         String fileName = "UTP";
 
         List<Post> trainPosts = DataReader.readPostUTP("./demo/data/"  + fileName + "/"+ dataName  + "_train.txt");
@@ -23,9 +24,9 @@ public class PIFTUTP {
 //        List<Post> testPosts = DataReader.readPosts("./demo/data/" + dataName + "/"  + "_test");
         System.out.println("PITFTest");
         System.out.println(dataName);
-        int dim = 64;//纬度
+        int dim = 32;//纬度
         double initStdev = 0.01;//初始化的赋值方差
-        int iter = 20;//100
+        int iter = 100;//100
         double learnRate = 0.05;//
         double regU = 0.00005;
         double regI = regU, regT = regU;//lameta

@@ -66,7 +66,7 @@ public class process {
      * 按照每个用户的最后几个切分？
      */
     public static void DivideData(String filepath){
-        String filename = "DianpingCheckinfalse1010";
+        String filename = "DianpingCheckintrue0.3_false1510_cate";
         String readpath = filepath+filename +".txt";
         String despth = "./demo/data/UTP/";
 
@@ -124,6 +124,11 @@ public class process {
         FileOperation.writeNotAppdend(filepath+filename+"_timeMapIndex",timeIds.toString());
 
     }
+
+    /**
+     * 对user进行map映射
+     * @param filepath
+     */
     public static void getuserMap(String filepath){
         String filename = "DianpingCheckinfalse1010";
         String readpath = filepath+filename +".txt";
@@ -159,8 +164,8 @@ public class process {
 
     public static void main(String args[]){
 //        timestampTrans("./rawdata");
-//            DivideData("./rawdata/");
-        getuserMap("./rawdata/");
+            DivideData("./rawdata/modelInput/");
+//        getuserMap("./rawdata/");
 //        String date = Date2TimeStamp("15-09-24" , "yy-MM-dd");// HH:mm:ss
 //        String date =TimeStamp2Date( "1288291694000","yy-MM-dd");
     }

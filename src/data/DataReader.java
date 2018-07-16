@@ -29,6 +29,9 @@ public class DataReader {
         List<String> dataList = FileOperation.readLineArrayList(filename);
         for (String data : dataList) {
             String[] contents = data.trim().split("[ \t,]+");
+            /**
+             * 注意文件中的顺序与读取顺序对应
+             */
             int user = Integer.parseInt(contents[0]);
             int item = Integer.parseInt(contents[1]);
             int timestamp = Integer.parseInt(contents[2]);

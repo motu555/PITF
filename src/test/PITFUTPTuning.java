@@ -63,10 +63,10 @@ public class PITFUTPTuning {
         /**
          * PITF需要调的三个参数
          */
-//        double[]regUStep = new double[]{0.01, 0.005,0.0005};//细粒度
-        double[] regUStep = new double[]{0.001, 0.1, 0.5};//粗粒度
-        int[] dimStep = new int[]{32, 64, 128};
-        double[] lrateStep = new double[]{0.01,0.02,0.008,0.005,};
+        double[]regUStep = new double[]{0.01, 0.005,0.0005};//细粒度
+//        double[] regUStep = new double[]{0.001, 0.1};//粗粒度 0.5
+        int[] dimStep = new int[]{32, 64};//128
+        double[] lrateStep = new double[]{0.01,0.008,0.005,};//0.02,
 
         double maxF1 = 0.0;
         List<DenseVector> bestMeasureList = new ArrayList<>();
