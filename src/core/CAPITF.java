@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import util.Lists;
 import util.Randoms;
 
+import java.awt.geom.Arc2D;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
@@ -32,32 +33,73 @@ public class CAPITF extends TagMFRecommender{
      * <userid, tagset>, <itemid, tagset>
      * 暂时没有用到
      */
-    protected Map<Integer, Set<Integer>> userTagSet, itemTagSet;
+//    protected Map<Integer, Set<Integer>> userTagSet, itemTagSet;
+     protected List<Set<Integer>> userTagSet, itemTagSet;
+    /**
+     * poi地理位置列表、类别列表
+     */
+//    List<Map<Integer, List<Long>>> userTagTimeList;？？？
+
+
 
     /**
      *各种参数定义在这里
      */
 //    protected List<Post> noisePost;
+    /**
+     * user, poi, preference score user-tag权重值
+     *  user-poi的权重值(user-poi-地理位置)
+     */
+    List<Map<Integer, Double>> predictUserTagPrefList;
+    /**
+     * time, poi, preference score  time-poi权重值
+     */
+    List<Map<Integer, Double>> itemTagPrefList;
+    double alphaUser = 3.0;
+    double alphaItem = 3.0;
 
     double averageTrainTime = 0.0;
     private static org.apache.commons.logging.Log allLog = LogFactory.getLog("alllog");
 
     public CAPITF(List<Post> trainPostsParam, List<Post> testPostsParam, int dimParam, double initStdevParam, int iterParam,
                   double learnRateParam, double regUParam, double regIParam, double regTParam,
-                  int randomSeedParam,int numSampleParam,int noiseRatesParam) throws IOException {
+                  int randomSeedParam,int numSampleParam) throws IOException {
         super(trainPostsParam, testPostsParam, dimParam, initStdevParam, iterParam, learnRateParam, regUParam, regIParam,
                 regTParam, randomSeedParam);
 
         this.numSample = numSampleParam;
-        this.trainTagSet = HashBasedTable.create();
-        this.userTagSet = new HashMap<>();
-        this.itemTagSet = new HashMap<>();
         //自定义
 //        this.noiseTagSet= HashBasedTable.create();
 //        this.noiseRates = noiseRatesParam;
+    }
 
+    /**
+     * 初始化模型，加载相应的内容
+     */
+    public void initModel() throws Exception{
+        this.trainTagSet = HashBasedTable.create();
+        //计算权重所用变量
+        this.userTagSet = new ArrayList<>();
+        this.itemTagSet = new ArrayList<>();
+
+        this.predictUserTagPrefList = new ArrayList<>();
+        this.itemTagPrefList =new ArrayList<>();
+        List<Map<Integer, Integer>> itemTagCountList = new ArrayList<>();
+//        List<Long> userTimeList = new ArrayList<>();//用来记录最晚时间作为预测时间
+
+        for (int userIndex = 0; userIndex < this.numUser; userIndex++) {
+            this.userTagSet.add(new HashSet<>());
+//            userTagTimeList.add(new HashMap<>());
+//            userItemSet.add(new HashSet<>());
+            this.predictUserTagPrefList.add(new HashMap<>());
+        }
+
+        for (int itemIndex = 0; itemIndex < this.numItem; itemIndex++) {
+            this.itemTagSet.add(new HashSet<>());
+            itemTagCountList.add(new HashMap<>());
+            this.itemTagPrefList.add(new HashMap<>());
+        }
         //解析训练集
-
         for (Post trainPost : this.trainPosts) {
             int user = trainPost.getUser();
             int item = trainPost.getItem();
@@ -67,53 +109,40 @@ public class CAPITF extends TagMFRecommender{
                 this.trainTagSet.put(user, item, new HashSet<>());
             }
             this.trainTagSet.get(user, item).add(tag);
-           /* if (!this.userTagSet.containsKey(user)) {
-                this.userTagSet.put(user, new HashSet<>());
-            }
-            if (!this.itemTagSet.containsKey(item)) {
-                this.itemTagSet.put(item, new HashSet<>());
-            }
 
             this.userTagSet.get(user).add(tag);
-            this.itemTagSet.get(item).add(tag);*/
+            this.itemTagSet.get(item).add(tag);
+
+            if (!itemTagCountList.get(item).containsKey(tag)) {
+                itemTagCountList.get(item).put(tag, 1);//时间-poi次数对
+            } else {
+                itemTagCountList.get(item).put(tag, itemTagCountList.get(item).get(tag) + 1);
+            }
         }
 
+            for (int item = 0; item < this.numItem; item++) {
+                double normalizeSum = 0.0;
+                Map<Integer, Integer> tempTagsCountMap = itemTagCountList.get(item);//time-poi pair
+                for(Map.Entry<Integer,Integer>tempTagsCount : tempTagsCountMap.entrySet()){
+                    int tag = tempTagsCount.getKey();
+                    int count = tempTagsCount.getValue();
+                    double tempValue = count;
+                    normalizeSum += tempValue;
+                    this.itemTagPrefList.get(item).put(tag, tempValue);//将原本的次数从int转化为double，便于计算
+                }
+                for (int tag : tempTagsCountMap.keySet()) {
+                    this.itemTagPrefList.get(item).put(tag, 1.0 + Math.log10(1.0 + Math.pow(10, alphaItem)
+                            * this.itemTagPrefList.get(item).get(tag) / normalizeSum));
+                }
 
-    }
-
-    /**
-     * 初始化模型，加载相应的内容
-     */
-    public void initModel() throws Exception{
-        /*//random生成候选集NOISE的 post
-        //noisePost中包含了noise以及原有的trainPost
-        this.noisePost=new ArrayList<>();
-//        int noiseRates = 5;
-//        int numNoise = this.numRates*noiseRates;//噪音总数量
-        for(int index = 0; index <this.numRates; index++){
-             Post tempPost = this.trainPosts.get(index);
-            int user = tempPost.getUser();
-            int item = tempPost.getItem();
-            int tag = tempPost.getTag();
-            this.noisePost.add(new Post(user, item, tag));
-            for(int i=0;i<noiseRates;i++){
-                int noisetag = Randoms.uniform(this.numTag);
-                this.noisePost.add(new Post(user, item, noisetag));
             }
+        /**
+         * TODO 另外文件中读取context信息
+         * category和lat lng的信息 shopCatSet、shopLocationSet
+         */
 
-        }
-        //将post读到table类型的noiseTagset中
-        for (Post noisePost : this.noisePost) {
-            int user = noisePost.getUser();
-            int item = noisePost.getItem();
-            int tag = noisePost.getTag();
 
-            if (!this.noiseTagSet.contains(user, item)) {
-                this.noiseTagSet.put(user, item, new HashSet<>());
-            }
-            this.noiseTagSet.get(user, item).add(tag);
-        }*/
-
+        //初始化隐变量
         this.userVectors = new DenseMatrix(this.numUser, this.dim);
         this.itemVectors = new DenseMatrix(this.numItem, this.dim);
         this.tagUserVectors = new DenseMatrix(this.numTag, this.dim);
@@ -152,10 +181,18 @@ public class CAPITF extends TagMFRecommender{
                 int user = tempPost.getUser();
                 int item = tempPost.getItem();
                 int tag = tempPost.getTag();
-                double x_uit = this.predict(user, item, tag);
+
+//                double userTagWeight = this.userTagTrainWeightList.get(user).get(tag).get(time);
+                double userTagWeight=1.0;
+                double itemTagWeight = this.calItemTagWeight(item, tag);
+                double x_uit = this.predictTrain(user, item, tag, userTagWeight, itemTagWeight);
                 //再sample一个负例
                 int neg_tag = this.drawSample(user, item);
-                double x_uint = this.predict(user, item, neg_tag);
+//                double userNegTagWeight = this.calUserNegativeTagWeight(user, neg_tag, time);
+                double userNegTagWeight=1.0;
+                double itemNegTagWeight = this.calItemTagWeight(item, neg_tag);
+                double x_uint = this.predictTrain(user, item, neg_tag, userNegTagWeight, itemNegTagWeight);
+
                 double normalizer = loss(x_uit - x_uint);
                 //目标函数的loss值
                 loss += Math.log(sigmoid(x_uit - x_uint));
@@ -175,12 +212,18 @@ public class CAPITF extends TagMFRecommender{
                     loss -= regT * Math.pow(t_n_u_f, 2);
                     loss -= regT * Math.pow(t_n_i_f, 2);
 
-                    this.userVectors.set(user, k, u_k + this.learnRate * (normalizer * (t_p_u_f - t_n_u_f) - this.regU * u_k));
-                    this.itemVectors.set(item, k, i_k + this.learnRate * (normalizer * (t_p_i_f - t_n_i_f) - this.regI * i_k));
-                    this.tagUserVectors.set(tag, k, t_p_u_f + this.learnRate * (normalizer * u_k - this.regT * t_p_u_f));
-                    this.tagUserVectors.set(neg_tag, k, t_n_u_f + this.learnRate * (normalizer * (-u_k) - this.regT * t_n_u_f));
-                    this.tagItemVectors.set(tag, k, t_p_i_f + this.learnRate * (normalizer * i_k - this.regT * t_p_i_f));
-                    this.tagItemVectors.set(neg_tag, k, t_n_i_f + this.learnRate * (normalizer * (-i_k) - this.regT * t_n_i_f));
+                    this.userVectors.set(user, k, u_k + this.learnRate *
+                            (normalizer * (t_p_u_f * userTagWeight - t_n_u_f * userNegTagWeight) - this.regU * u_k));
+                    this.itemVectors.set(item, k, i_k + this.learnRate *
+                            (normalizer * (t_p_i_f * itemTagWeight - t_n_i_f * itemNegTagWeight) - this.regI * i_k));
+                    this.tagUserVectors.set(tag, k, t_p_u_f + this.learnRate *
+                            (normalizer * u_k * userTagWeight - this.regT * t_p_u_f));
+                    this.tagUserVectors.set(neg_tag, k, t_n_u_f + this.learnRate *
+                            (normalizer * (-u_k) * userNegTagWeight - this.regT * t_n_u_f));
+                    this.tagItemVectors.set(tag, k, t_p_i_f + this.learnRate *
+                            (normalizer * i_k * itemTagWeight - this.regT * t_p_i_f));
+                    this.tagItemVectors.set(neg_tag, k, t_n_i_f + this.learnRate *
+                            (normalizer * (-i_k) * itemNegTagWeight - this.regT * t_n_i_f));
                 }
             }
             /**
@@ -197,7 +240,7 @@ public class CAPITF extends TagMFRecommender{
             /**
              * 隔几轮输出一次
              */
-            if(iter_index % 5== 0||iter_index==(this.iter-1)) {
+            if(iter_index % 10== 0||iter_index==(this.iter-1)) {
                 measureList = evaluate();
             }
 
@@ -205,29 +248,6 @@ public class CAPITF extends TagMFRecommender{
         }
         System.out.println("averageTime " + averageTrainTime/this.iter);
 
-    }
-    public void nuConstraint() throws Exception {
-        for (Table.Cell<Integer, Integer, Set<Integer>> tempCell : this.testTagSet.cellSet()) {
-            int user = tempCell.getRowKey();
-            int item = tempCell.getColumnKey();
-            Set<Integer> tags = tempCell.getValue();
-            //只针对特定的一对user、item，有n个预测值；tag-score；已经经过排序
-            List<Map.Entry<Integer, Double>> itemScores = this.predictTopN(user, item);
-            /**
-             * 候选集数据结构???
-             */
-            List<Map<Integer,Set<Integer>>> candidateTag;
-            candidateTag = new ArrayList<>();
-            candidateTag.add(new HashMap<>());
-            candidateTag.get(1).put(1,new HashSet<>());//??
-            candidateTag.get(1).get(1).add(1);
-
-            for (int index = 0; index < this.numTag; index++) {
-                if (index < itemScores.size()) {
-
-                }
-            }
-        }
     }
 
     //归一化
@@ -255,9 +275,23 @@ public class CAPITF extends TagMFRecommender{
     }
     @Override
     protected double predict(int user, int item, int tag) {
-        //目标预测结果，矩阵行对应相乘
-        return DenseMatrix.rowMult(this.userVectors, user, this.tagUserVectors, tag) +
-                DenseMatrix.rowMult(this.itemVectors, item, this.tagItemVectors, tag);
+        //目标预测结果，矩阵行对应相乘；如果没有被计算过权重，最低为1
+        double userTagWeight = 1.0;
+        double itemTagWeight = 1.0;
+
+        /*if (this.predictUserTagPrefList.get(user).containsKey(tag)) {
+            userTagWeight = this.predictUserTagPrefList.get(user).get(tag);
+        }*/
+        if (this.itemTagPrefList.get(item).containsKey(tag)) {
+            itemTagWeight = this.itemTagPrefList.get(item).get(tag);
+        }
+        return userTagWeight * DenseMatrix.rowMult(this.userVectors, user, this.tagUserVectors, tag) +
+                itemTagWeight * DenseMatrix.rowMult(this.itemVectors, item, this.tagItemVectors, tag);
+    }
+
+    protected double predictTrain(int user, int item, int tag, double userTagWeight, double itemTagWeight) {
+        return userTagWeight * DenseMatrix.rowMult(this.userVectors, user, this.tagUserVectors, tag) +
+                itemTagWeight * DenseMatrix.rowMult(this.itemVectors, item, this.tagItemVectors, tag);
     }
 
     /**
@@ -284,17 +318,21 @@ public class CAPITF extends TagMFRecommender{
      */
     protected List<Map.Entry<Integer, Double>> predictTopN(int user, int item) throws Exception {
         List<Map.Entry<Integer, Double>> itemScores = new ArrayList<>();
-//        Set<Integer> utSet = this.userTagSet.get(user);
-//        Set<Integer> itSet = this.itemTagSet.get(item);
         for (int tag = 0; tag < this.numTag; tag++) {
-            double rank = 0.0;
-            rank += DenseMatrix.rowMult(this.userVectors, user, this.tagUserVectors, tag);
-            rank += DenseMatrix.rowMult(this.itemVectors, item, this.tagItemVectors, tag);
+            double rank = this.predict(user, item, tag);//预测方法中加入了权重
             itemScores.add(new AbstractMap.SimpleImmutableEntry<>(tag, rank));
         }
         Lists.sortList(itemScores, true);
         return itemScores;
     }
 
+    private double calItemTagWeight(int item, int tag) {
+        //tag没有被用户用来标记过item,则权重为1.0
+        double weight = 1.0;
+        if (this.itemTagPrefList.get(item).containsKey(tag)) {
+            weight = this.itemTagPrefList.get(item).get(tag);
+        }
+        return weight;
+    }
 
 }
