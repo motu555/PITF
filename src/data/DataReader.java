@@ -57,4 +57,25 @@ public class DataReader {
         return dataPosts;
     }
 
+    //  ContextPost( tag, cate, lng, lat)
+    //测试能否读取成功，先要把cat编号
+    public static List<ContextPost> readContextPost(String filename){
+        List<ContextPost> ContextPosts = new ArrayList<>();
+        List<String> dataList = FileOperation.readLineArrayList(filename);
+        for (String data : dataList) {
+            String[] contents = data.trim().split("[ \t,]+");
+            /**
+             * 注意文件中的顺序与读取顺序对应
+             */
+            int tag = Integer.parseInt(contents[0]);
+            int cate = Integer.parseInt(contents[1]);
+            String lat = contents[2];
+            String lng = contents[3];
+//            String time = Long.parseLong(contents[3]);
+            ContextPosts.add(new ContextPost( tag, cate, lng, lat));
+        }
+
+        return ContextPosts;
+    }
+
 }
