@@ -195,7 +195,7 @@ public class TAPITF extends TagMFRecommender {
             }
         }
 
-        for (int user = 0; user < this.numUser; user++) {
+        for (int user = 0; user < this.numUser; user++) {//将每个用户的得tag按时间排序？
             Map<Integer, List<Long>> tempTagsTimeMap = userTagTimeList.get(user);
             for (Map.Entry<Integer, List<Long>> tempTagsTime : tempTagsTimeMap.entrySet()) {
                 List<Long> tempTimeList = tempTagsTime.getValue();

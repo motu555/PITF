@@ -24,6 +24,21 @@ public class DataReader {
         //加上对train与test数据集中的user，item,tag数据统计
         return dataPosts;
     }
+    //没有时间
+    public static List<Post> readPost(String filename) {
+        List<Post> dataPosts = new ArrayList<>();
+        List<String> dataList = FileOperation.readLineArrayList(filename);
+        for (String data : dataList) {
+            String[] contents = data.trim().split("[ \t,]+");
+            int user = Integer.parseInt(contents[0]);
+            int item = Integer.parseInt(contents[1]);
+            int tag = Integer.parseInt(contents[2]);
+//            long time = Long.parseLong(contents[3]);
+            dataPosts.add(new Post(user, item, tag));
+        }
+        //加上对train与test数据集中的user，item,tag数据统计
+        return dataPosts;
+    }
     public static List<Post> readPostUTP(String filename){
         List<Post> dataPosts = new ArrayList<>();
         List<String> dataList = FileOperation.readLineArrayList(filename);

@@ -55,16 +55,17 @@ public class CAPITFTest {
 //        double regU = 0.01;
 //        double regI = regU, regT = regU;
         double initStdev = 0.01;
-        int iter = 1;
+        int iter = 100;
         int numSample = 100;
         int randomSeed = 1;
 //        int noiseRate =5;//噪音条数？？若knn生成是否还需要？？？for测试
 
-        double[]regUStep = new double[]{0.01,0.015};//细粒度 0.005,0.0005
+        double[]regUStep = new double[]{0.01};//细粒度 0.005,0.0005,0.015
 //        double[] regUStep = new double[]{0.001, 0.1};//粗粒度 0.5
         int[] dimStep = new int[]{64,128};//32
-        double[] lrateStep = new double[]{0.01};//0.02,
-        int[] noiseRate =new int[]{1,5,10};
+        double[] lrateStep = new double[]{0.01};//0.02,,0.008
+//        int[] noiseRate =new int[]{1,5,10};
+        double[] alphaStep =new double[]{0.0,0.5,1.0,1.5,2.0} ;//item-tag 学习权重
 
 
 /*        List<Post> trainPosts = DataReader.readPostUTP(trainPath);
@@ -76,7 +77,7 @@ public class CAPITFTest {
         double maxF1 = 0.0;
         List<DenseVector> bestMeasureList = new ArrayList<>();
         List<DenseVector> eachMeasureList = new ArrayList<>();
-        double[] bestParas = new double[5];//包括reg, dimension,lrate,trainTime
+        double[] bestParas = new double[6];//包括reg, dimension,lrate,trainTime
         double[] eachParas = new double[5];
 
 
@@ -92,12 +93,13 @@ public class CAPITFTest {
             for (int i = 0; i < regUStep.length; i++)
                 for (int j = 0; j < dimStep.length; j++) {
                     for (int l = 0; l < lrateStep.length; l++) {
-                        for(int r=0;r<noiseRate.length;r++) {
+                        for(int r=0;r<alphaStep.length;r++) {
                             Date startTime = new Date();
                             double regI = regUStep[i], regT = regUStep[i], regU = regUStep[i];
                             int dim = dimStep[j];
                             double learnRate = lrateStep[l];
-                            int noise = noiseRate[r];
+//                            int noise = noiseRate[r];
+                            double alphaItem=alphaStep[r];
                             System.out.println("dataset " + dataName + " classname " + className);
                             System.out.println(" dim " + dim + " initStdev " + initStdev + " iter " + iter + " learnRate "
                                     + learnRate + " regU regI regT " + regU + " " + regI + " " + regT + " randomseed " + randomSeed + " numSample " + numSample);
@@ -106,16 +108,17 @@ public class CAPITFTest {
                              */
                             allLog.info(dataName + " ");
                             allLog.info(trainPath + " " + testPath + " dataset " + dataName + " initStdev " + initStdev + "\n"
-                                    + " learn Rate " + learnRate + " regU " + regU + " dim " + dim + " iter " + iter + "\n" + " randomseed " + randomSeed + " numSample " + numSample + "\n");
+                                    +"参数："+ " learn Rate " + learnRate + " regU " + regU + " dim " + dim + " iter " + iter + " alphaItem "+alphaItem+"\n"
+                                    + " randomseed " + randomSeed + " numSample " + numSample + "\n");
 //                        List<Post> trainPosts = DataReader.readPostUTP(trainPaths[k]);
 //                        List<Post> testPosts = DataReader.readPostUTP(testPaths[k]);
                             List<Post> trainPosts = DataReader.readPostUTP(trainPath);
                             List<Post> testPosts = DataReader.readPostUTP(testPath);
 
-                            CAPITF capitf = new CAPITF(trainPosts, testPosts, dim, initStdev, iter, learnRate, regU, regI, regT, randomSeed, numSample, noise);
+                            CAPITF capitf = new CAPITF(trainPosts, testPosts, dim, initStdev, iter, learnRate, regU, regI, regT, randomSeed, numSample,alphaItem);
                             capitf.run();//这个函数会调用model的初始化及创建函数
                             eachMeasureList = capitf.getMeasureList();
-                            eachParas = new double[]{capitf.getAverageTrainTime(), learnRate, regU, dim, iter};
+                            eachParas = new double[]{capitf.getAverageTrainTime(), learnRate, regU, dim, iter,alphaItem};
 
                             //eachMeasureList是每套参数下的最终结果，参数设置和相应的结果需要写入Log文件
                             printMeasureList(eachMeasureList, eachParas);
@@ -128,22 +131,23 @@ public class CAPITFTest {
                                 bestParas[2] = regU;
                                 bestParas[3] = dim;
                                 bestParas[4] = iter;
+                                bestParas[5] = alphaItem;
+
                             }
 
                             measureLog.info("end: " + new Date());
 //                        String timeLog = startTime.toString() + "\t" + endTime.toString();
-//                        Utils.printMeasureList(measureLog, eachMeasureList, eachParas, timeLog);
                         }
                     }
                 }
 //        }
         measureLog.info(dataName + " best performance on F1@5");
-        PITFUTPTuning.printMeasureList(bestMeasureList, bestParas);
+        printMeasureList(bestMeasureList, bestParas);
 
     }
     public static void printMeasureList(List<DenseVector> measureList, double[] paras) {
         //PITF.getAverageTrainTime(),learnRate, regU, dim, iter
-        measureLog.info("参数:"+" learnRate " + paras[1] + " regU " + paras[2] + " dim " + paras[3]+"iter"+paras[4]);
+        measureLog.info("参数:"+" learnRate " + paras[1] + " regU " + paras[2] + " dim " + paras[3]+" iter "+paras[4] +" alphaItem "+paras[5]);
         measureLog.info("average Train Time: " + paras[0] + "s");
 
         StringBuilder string = new StringBuilder();

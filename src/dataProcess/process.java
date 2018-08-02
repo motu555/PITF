@@ -12,35 +12,36 @@ import java.util.*;
  * Created by motu on 2018/6/17.
  */
 public class process {
-/*
-读取原始数据checkinWithTimestamp.txt 格式"userid+\t+poiid+\t+poicategory+time"
-并以<user,time,category,time>存储，time转换为unix时间戳
-*/
+    /*
+    读取原始数据checkinWithTimestamp.txt 格式"userid+\t+poiid+\t+poicategory+time"
+    并以<user,time,category,time>存储，time转换为unix时间戳
+    */
     public static void timestampTrans(String filename) {
-    String readname = filename+"/checkinWithTimestamp.txt";
-    String writename = filename+ "/checkinWithUnixTime.txt";
+        String readname = filename + "/checkinWithTimestamp.txt";
+        String writename = filename + "/checkinWithUnixTime.txt";
 //    List<Post> dataPosts = new ArrayList<>();
-    List<String> dataList = FileOperation.readLineArrayList(readname);
-    List<String> output= new ArrayList<>() ;
-    for (String data : dataList) {
-        String[] contents = data.trim().split("[ \t,]+");
+        List<String> dataList = FileOperation.readLineArrayList(readname);
+        List<String> output = new ArrayList<>();
+        for (String data : dataList) {
+            String[] contents = data.trim().split("[ \t,]+");
        /* int user = Integer.parseInt(contents[0]);
         int item = Integer.parseInt(contents[1]);
         String date = Date2TimeStamp(contents[3], "yy-MM-dd");
         long time = Long.parseLong(date);*/
 //        dataPosts.add(new Post(user, item, tag,time));
-        String date = Date2TimeStamp(contents[3], "yy-MM-dd");
-        String line = contents[0]+"\t"+contents[1]+"\t"+contents[2]+"\t"+ date;
-        System.out.println(line);
-        output.add(line);
-        FileOperation.writeAppdend(writename,line+"\t");
+            String date = Date2TimeStamp(contents[3], "yy-MM-dd");
+            String line = contents[0] + "\t" + contents[1] + "\t" + contents[2] + "\t" + date;
+            System.out.println(line);
+            output.add(line);
+            FileOperation.writeAppdend(writename, line + "\t");
+
+        }
+
+        //加上对train与test数据集中的user，item,tag数据统计
+//    return dataPosts;
 
     }
 
-    //加上对train与test数据集中的user，item,tag数据统计
-//    return dataPosts;
-
-}
     /*将str指定格式时间转换为unix时间戳*/
     public static String Date2TimeStamp(String dateStr, String format) {
         try {
@@ -51,6 +52,7 @@ public class process {
         }
         return "";
     }
+
     /*将unix时间戳转换为指定格式*/
     public static String TimeStamp2Date(String timestampString, String formats) {
 //        formats = "yyyy-MM-dd HH:mm:ss";
@@ -59,15 +61,20 @@ public class process {
         return date;
     }
 
+    public static String TimeStamp2Date(long timestamp, String formats) {
+        String date = new SimpleDateFormat(formats, Locale.CHINA).format(new Date(timestamp));
+        return date;
+    }
+
     /**
      * 将文件mapping编号，并分为训练集和测试集
-     *随机
+     * 随机
      * TODO
      * 按照每个用户的最后几个切分？
      */
-    public static void DivideData(String filepath){
-        String filename = "DianpingCheckintrue0.3_false1510_cate";
-        String readpath = filepath+filename +".txt";
+    public static void DivideData(String filepath) {
+        String filename = "DianpingCheckintrue0.3_false1510";
+        String readpath = filepath + filename + ".txt";
         String despth = "./demo/data/UTP/";
 
         FileInputStream file;
@@ -79,8 +86,8 @@ public class process {
         userIds = new HashMap<>();
         poiIds = new HashMap<>();
         timeIds = new HashMap<>();
-        int trainnum=0;
-        int testnum=0;
+        int trainnum = 0;
+        int testnum = 0;
         try {
             file = new FileInputStream(readpath);
             bufferedReader = new BufferedReader(new InputStreamReader(file, "UTF-8"));
@@ -96,12 +103,11 @@ public class process {
                 poiIds.put(tempItem, innerPoi);
                 int innerTime = timeIds.containsKey(tempTime) ? timeIds.get(tempTime) : timeIds.size();
                 timeIds.put(tempTime, innerTime);
-                String writeStr = innerUser+"\t"+innerTime+"\t"+innerPoi+"\n";
-                if(Math.random()<0.8){
+                String writeStr = innerUser + "\t" + innerTime + "\t" + innerPoi + "\n";
+                if (Math.random() < 0.8) {
                     trainStr.append(writeStr);
                     trainnum++;
-                }
-                else {
+                } else {
                     testStr.append(writeStr);
                     testnum++;
                 }
@@ -114,24 +120,25 @@ public class process {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("trainnum:"+trainnum+" testnum:   "+testnum);
-        System.out.println("usernum:"+userIds.size()+" poinum:"+poiIds.size()+" timenum:"+timeIds.size());
+        System.out.println("trainnum:" + trainnum + " testnum:   " + testnum);
+        System.out.println("usernum:" + userIds.size() + " poinum:" + poiIds.size() + " timenum:" + timeIds.size());
         FileOperation.writeNotAppdend(despth + filename + "_train.txt", trainStr.toString());
         FileOperation.writeNotAppdend(despth + filename + "_test.txt", trainStr.toString());
         //id映射文件记录
-        FileOperation.writeNotAppdend(filepath+filename+"_userMapIndex",userIds.toString());
-        FileOperation.writeNotAppdend(filepath+filename+"_poiMapIndex",poiIds.toString());
-        FileOperation.writeNotAppdend(filepath+filename+"_timeMapIndex",timeIds.toString());
+        FileOperation.writeNotAppdend(filepath + filename + "_userMapIndex", userIds.toString());
+        FileOperation.writeNotAppdend(filepath + filename + "_poiMapIndex", poiIds.toString());
+        FileOperation.writeNotAppdend(filepath + filename + "_timeMapIndex", timeIds.toString());
 
     }
 
     /**
      * 对user进行map映射
+     *
      * @param filepath
      */
-    public static void getuserMap(String filepath){
+    public static void getuserMap(String filepath) {
         String filename = "DianpingCheckinfalse1010";
-        String readpath = filepath+filename +".txt";
+        String readpath = filepath + filename + ".txt";
         String despth = "./demo/data/UTP/";
         FileInputStream file;
         BufferedReader bufferedReader;
@@ -157,14 +164,20 @@ public class process {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        FileOperation.writeNotAppdend(filepath+filename+"_userMap",userIds.toString());
+        FileOperation.writeNotAppdend(filepath + filename + "_userMap", userIds.toString());
 
     }
 
 
-    public static void main(String args[]){
+    public static void main(String args[]) {
 //        timestampTrans("./rawdata");
-            DivideData("./rawdata/modelInput/");
+//            DivideData("./rawdata/modelInput/");
+        String formats = "yyyy-MM-dd HH:mm:ss";
+        System.out.println(TimeStamp2Date("886397596000", formats));
+
+//        1288397039000
+
+        System.out.println(TimeStamp2Date(System.currentTimeMillis(), formats));
 //        getuserMap("./rawdata/");
 //        String date = Date2TimeStamp("15-09-24" , "yy-MM-dd");// HH:mm:ss
 //        String date =TimeStamp2Date( "1288291694000","yy-MM-dd");

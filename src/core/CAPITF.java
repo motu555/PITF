@@ -22,6 +22,7 @@ import java.util.*;
  */
 public class CAPITF extends TagMFRecommender{
     protected int numSample;
+    protected double alphaItem;
 //    protected int noiseRates;
     /**
      * <useid, itemid, tagset>
@@ -55,19 +56,20 @@ public class CAPITF extends TagMFRecommender{
      * time, poi, preference score  time-poi权重值
      */
     List<Map<Integer, Double>> itemTagPrefList;
-    double alphaUser = 3.0;
-    double alphaItem = 3.0;
+   // double alphaUser = 3.0;
+   // double alphaItem = 3.0;
 
     double averageTrainTime = 0.0;
     private static org.apache.commons.logging.Log allLog = LogFactory.getLog("alllog");
 
     public CAPITF(List<Post> trainPostsParam, List<Post> testPostsParam, int dimParam, double initStdevParam, int iterParam,
                   double learnRateParam, double regUParam, double regIParam, double regTParam,
-                  int randomSeedParam,int numSampleParam) throws IOException {
+                  int randomSeedParam,int numSampleParam,double alphaItem) throws IOException {
         super(trainPostsParam, testPostsParam, dimParam, initStdevParam, iterParam, learnRateParam, regUParam, regIParam,
                 regTParam, randomSeedParam);
 
         this.numSample = numSampleParam;
+        this.alphaItem =alphaItem;
         //自定义
 //        this.noiseTagSet= HashBasedTable.create();
 //        this.noiseRates = noiseRatesParam;
