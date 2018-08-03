@@ -48,10 +48,9 @@ public class DataReader {
              * 注意文件中的顺序与读取顺序对应
              */
             int user = Integer.parseInt(contents[0]);
-            int item = Integer.parseInt(contents[1]);
-            int timestamp = Integer.parseInt(contents[2]);
-//            String time = Long.parseLong(contents[3]);
-            dataPosts.add(new Post(user, item, timestamp));
+            int timestamp = Integer.parseInt(contents[1]);//时间===pitf中item
+            int shop = Integer.parseInt(contents[2]);//poi====pitf中tag
+            dataPosts.add(new Post(user, timestamp, shop));
         }
 
         return dataPosts;

@@ -23,6 +23,7 @@ import java.util.*;
 public class CAPITF extends TagMFRecommender{
     protected int numSample;
     protected double alphaItem;
+    protected double alphaUser;
 //    protected int noiseRates;
     /**
      * <useid, itemid, tagset>
@@ -64,12 +65,13 @@ public class CAPITF extends TagMFRecommender{
 
     public CAPITF(List<Post> trainPostsParam, List<Post> testPostsParam, int dimParam, double initStdevParam, int iterParam,
                   double learnRateParam, double regUParam, double regIParam, double regTParam,
-                  int randomSeedParam,int numSampleParam,double alphaItem) throws IOException {
+                  int randomSeedParam,int numSampleParam,double alphaItem) throws IOException {//,double alphaUser
         super(trainPostsParam, testPostsParam, dimParam, initStdevParam, iterParam, learnRateParam, regUParam, regIParam,
                 regTParam, randomSeedParam);
 
         this.numSample = numSampleParam;
         this.alphaItem =alphaItem;
+        this.alphaUser =alphaUser;
         //自定义
 //        this.noiseTagSet= HashBasedTable.create();
 //        this.noiseRates = noiseRatesParam;
