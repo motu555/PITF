@@ -113,8 +113,8 @@ public class process {
                 catIds.put(tempCat,innerCat);
                 String writeStr = innerUser + "\t" + innerTime + "\t" + innerPoi + "\t" +innerCat+"\t" +tempLng+"\t" +tempLat+"\n";
 
-//                if (Math.random() < 0.8) {//随机二八划分训练集
-                if(Integer.parseInt(month)<10){
+                if (Math.random() < 0.8) {//随机二八划分训练集
+//                if(Integer.parseInt(month)<10){
 //                    System.out.print(writeStr);
                     trainStr.append(writeStr);
                     trainnum++;
@@ -134,8 +134,8 @@ public class process {
         }
         System.out.println("trainnum:" + trainnum + " testnum:   " + testnum);
         System.out.println("usernum:" + userIds.size() + " poinum:" + poiIds.size() + " timenum:" + timeIds.size());
-        FileOperation.writeNotAppdend(despth + filename + "_train.txt", trainStr.toString());
-        FileOperation.writeNotAppdend(despth + filename + "_test.txt", testStr.toString());
+        FileOperation.writeNotAppdend(despth + filename + "random_train.txt", trainStr.toString());
+        FileOperation.writeNotAppdend(despth + filename + "random_test.txt", testStr.toString());
         //id映射文件记录
         FileOperation.writeNotAppdend(filepath + filename + "_userMapIndex", userIds.toString());
         FileOperation.writeNotAppdend(filepath + filename + "_poiMapIndex", poiIds.toString());

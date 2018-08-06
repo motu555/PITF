@@ -64,13 +64,13 @@ public class DataReader {
         for (String data : dataList) {
             String[] contents = data.trim().split("[ \t,]+");
             /**
+             * 合并在一个文件中
              * 注意文件中的顺序与读取顺序对应
              */
-            int tag = Integer.parseInt(contents[0]);
-            int cate = Integer.parseInt(contents[1]);
-            String lat = contents[2];
-            String lng = contents[3];
-//            String time = Long.parseLong(contents[3]);
+            int tag = Integer.parseInt(contents[2]);//shop
+            int cate = Integer.parseInt(contents[3]);
+            String lng = contents[4];
+            String lat = contents[5];
             ContextPosts.add(new ContextPost( tag, cate, lng, lat));
         }
 
